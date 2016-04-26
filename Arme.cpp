@@ -1,13 +1,9 @@
-#include "..\include\Arme.h"
-#include "..\include\Personnage.h"
+#include "Arme.h"
+#include "Personnage.h"
+
+using namespace std;
 
 /* --------Constructeurs-------- */
-
-Arme::Arme(std::string name, int damage) : m_name(name), m_damage(damage)
-{
-    m_compteurArme = 0;
-    m_boundingBox = sprite.getGlobalBounds();
-}
 
 Arme::Arme(std::string name, int damage, int cooldown) : m_name(name), m_damage(damage), m_cooldown(cooldown)
 {
@@ -44,12 +40,13 @@ int Arme::getCooldown() {
 
 /* --------Autres Modalités-------- */
 
-bool Arme::checkHitbox(sf::FloatRect ennemiBoundingBox) {
-    return (m_boundingBox.intersects(ennemiBoundingBox));
+void Arme::changer(string name, int damage, int cooldown) {
+
+    m_name = name;
+    m_damage = damage;
+    m_cooldown = cooldown;
 }
 
-void Arme::followHero(Position posHero, Direction dir) {
-}
-
-void Arme::changeSprite(Direction dir) {
+bool Arme::checkHitbox(Direction dir, Position posJoueur, Position posEnnemi) {
+	return 0;
 }

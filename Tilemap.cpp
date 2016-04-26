@@ -1,8 +1,31 @@
+//
+// Created by robin on 28/12/15.
+//
+
+#include "Tilemap.h"
 #include <iostream>
 
-#include "..\include\Tilemap.h"
-
 using namespace std;
+
+
+Tilemap::Tilemap() {
+
+    std::string mon_fichier = "Map.txt";
+    std::ifstream fichier;
+    fichier.open(mon_fichier.c_str());
+
+    for (int i=0;i<8;i++)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            fichier >> m_map[i][j];
+        }
+    }
+
+    fichier.close();
+
+
+}
 
 /* --------Modalités get-------- */
 
@@ -68,19 +91,18 @@ void Tilemap::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
 
 
-void Tilemap::loadLevelFromText(int *width, int *height,std::vector<std::vector<int> >* level) {
+void Tilemap::loadLevelFromText(int *width, int *height,std::vector<std::vector<int> >* level, string name_level, PosMap PosJoueur) {
 
-    std::string mon_fichier = "map.txt";
+    std::string mon_fichier = "CaseMap.txt";
     std::ifstream fichier;
     fichier.open(mon_fichier.c_str());
-
+    level->clear();
     std::string str;
 
     do {
         std::getline(fichier, str);
-        std::cout << str << std::endl;
     }
-    while (str != "test");
+    while (str != name_level);
 
     fichier >> *width >> *height;
 
@@ -96,15 +118,25 @@ void Tilemap::loadLevelFromText(int *width, int *height,std::vector<std::vector<
         };
     level->push_back(myline);
     }
+    fichier.close();
 
-   /* for (int j = 0; j <*height ; j++)
-    {
-        for (int i = 0; i < *width; i++) {
-            cout << level[j][i];
+    if ((m_map[PosJoueur.i-1][PosJoueur.j]!=0) and (m_map[PosJoueur.i-1][PosJoueur.j]<50)){
+        level->at(0).at(*width/2)=2;
+    }
 
-        };
-        cout<<endl;
-    }*/
+    if ((m_map[PosJoueur.i+1][PosJoueur.j]!=0) and (m_map[PosJoueur.i+1][PosJoueur.j]<50)){
+        level->at(*height-1).at(*width/2)=4;
+    }
+
+    if ((m_map[PosJoueur.i][PosJoueur.j-1]!=0) and (m_map[PosJoueur.i][PosJoueur.j-1]<50)){
+        level->at(7).at(0)=5;
+
+    }
+
+    if ((m_map[PosJoueur.i][PosJoueur.j+1]!=0) and (m_map[PosJoueur.i][PosJoueur.j+1]<50)){
+        level->at(7).at(19)=3;
+
+    }
 
 
 }

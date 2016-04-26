@@ -1,25 +1,29 @@
+//
+// Created by root on 2/16/16.
+//
+//std::cout << << std::endl;
+
+#include "Lance.h"
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <unistd.h>
-
-#include "..\include\Lance.h"
 
 #define HLANCE 70
 #define LLANCE 14
 
 /* --------Constructeurs-------- */
 
-Lance::Lance(std::string name, int damage, int cooldown) : Arme(name, damage, cooldown)
+Lance::Lance(std::string name, int damage, int cooldown, Position posHero) : Arme(name, damage, cooldown)
 {
 
-    m_image = "sprites/lance.png";
+    m_image = "lance.png";
     m_countSprite = 0;
 
     // Initialisation du sprite
     TexArme.loadFromFile(m_image);
     sprite.setTexture(TexArme);
     sprite.setTextureRect(sf::Rect<int>(0,0,15,70));
-    sprite.setPosition(m_pos.x,m_pos.y);
+    sprite.setPosition(posHero.x,posHero.y);
 
     m_boundingBox = sprite.getGlobalBounds();
 }
@@ -104,4 +108,8 @@ void Lance::changeSprite(Direction dir) {
             else if (m_countSprite == 3*HLANCE)
                 sprite.setPosition(m_pos.x+10,m_pos.y+40);
     }
+}
+
+bool Lance::checkHitbox(sf::FloatRect ennemiBoundingBox) {
+    return (m_boundingBox.intersects(ennemiBoundingBox));
 }
