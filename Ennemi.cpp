@@ -1,8 +1,11 @@
+//
+// Created by robin on 14/01/16.
+//
 #include <SFML/Graphics.hpp>
+
+#include "Ennemi.h"
 #include <list>
 #include <math.h>
-
-#include "..\include\Ennemi.h"
 
 /* --------Constructeurs-------- */
 Ennemi::Ennemi(int hp, int mana, int vitesse, int defense) : Personnage(hp, mana, vitesse, defense)
@@ -10,16 +13,16 @@ Ennemi::Ennemi(int hp, int mana, int vitesse, int defense) : Personnage(hp, mana
     m_taille_sprite.largeur=50;
     m_taille_sprite.hauteur=60;
 
-    m_image="sprites/Ennemi.png";
+    m_image="Ennemi.png";
 
     // Initialisation du sprite
-    m_tex.loadFromFile(m_image);
-    m_sprite.setTexture(m_tex);
-    m_sprite.setTextureRect(sf::Rect<int>(0,0,60,70));
-    m_sprite.setPosition(m_pos.x,m_pos.y);
+    Tex.loadFromFile(m_image);
+    sprite.setTexture(Tex);
+    sprite.setTextureRect(sf::Rect<int>(0,0,60,70));
+    sprite.setPosition(m_pos.x,m_pos.y);
 }
 
-/* --------Autres Modalités-------- */
+/* --------Autres Modalitï¿½s-------- */
 
 void Ennemi::IAEnnemiBase(Position PosPers,std::vector<std::vector<int> >* level, sf::Vector2u tileSize,int width) {
 
@@ -134,5 +137,7 @@ int calculHeur(noeud n1, noeud n2)
 /* --------Destructeurs-------- */
 
 Ennemi::~Ennemi() {
+
+    sprite.~Drawable();
 
 }

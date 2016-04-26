@@ -1,125 +1,136 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <unistd.h>
+#include "Personnage.h"
+#include "Tilemap.h"
+#include "Troll.h"
+#include "Ennemi.h"
+#include "Hero.h"
+#include "Menu.h"
 #include <vector>
-#include <list>
+#include <SFML/Audio.hpp>
 
-#include "..\include\Personnage.h"
-#include "..\include\Tilemap.h"
-#include "..\include\Troll.h"
-#include "..\include\Ennemi.h"
-#include "..\include\Hero.h"
 
 using namespace std;
 
 int main() {
 
-    // Création de la fenêtre graphique
     sf::RenderWindow window(sf::VideoMode(1200,900),"The dephts of Magic",sf::Style::Default);
     sf::Clock clock;
     int height_level=0;
     int width_level=0;
-
-    int phase = 0;
-
-    // Chargement de la map
     sf::Vector2u tile_size;
+    bool mybool=true;
+    int compteur=0;
     vector<vector<int> > level;
-    Tilemap::loadLevelFromText(&width_level,&height_level,&level);
+
+    string str;
+    Menu menu;
+
+    /* --------- Intialisation Musique ------------ */
+    sf::Music music_menu;
+    sf::Music music_jeu;
+
+    music_jeu.openFromFile("FreeSwitzerland.ogg");
+    music_menu.openFromFile("music_menu.ogg");
+
+    /* --------- Initialisation Personnage  ------------ */
+    Hero perso(100, 100, 6, 3);
+    Troll troll;
+
+    /* --------- Intialisation Map ------------ */
     tile_size.y=60;
     tile_size.x=60;
-
-    Tilemap map;
-    map.load("sprites/tileset.png",tile_size,&level,width_level,height_level);
-
-    // Création du premier node
-    std::list<Ennemi *> ennemiList;
-    std::list<Ennemi *>::iterator itor;
-
-    std::list<Projectile *> projectileList;
-    std::list<Projectile *>::iterator projItor;
-
-    // Création des entités
-    Hero perso(100, 150, 5, 3);
-    Troll *troll1 = new Troll (100, 100);
-    Troll *troll2 = new Troll (200, 200);
-    Troll *troll3 = new Troll (300, 300);
-    Troll *troll4 = new Troll (400, 400);
-    Troll *troll5 = new Troll (500, 500);
-
-    // On place les entités dans la liste
-    ennemiList.push_back (troll1);
-    ennemiList.push_back (troll2);
-    ennemiList.push_back (troll3);
-    ennemiList.push_back (troll4);
-    ennemiList.push_back (troll5);
+    Tilemap Case_map;
+    Case_map.loadLevelFromText(&width_level,&height_level,&level,"test1",perso.getPosMap());
+    Case_map.load("tileset.png",tile_size,&level,width_level,height_level);
 
     // Boucle des évènements
     while (window.isOpen())
     {
-        sf::Time elapsed = clock.restart();
+        if (menu.getEtat()==NONE) {
 
-        if (phase == 0)
-        {
-            /* --------Menu-------- */
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            if (menu.GestionMenu(window)==1)
+            {
                 window.close();
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-                phase = 1;
+            }
+            else
+            {
+                /* --------Gestion de la musique-------- */
+                if (music_menu.getStatus()==music_menu.Stopped)
+                    music_menu.play();
 
-            /* --------Affichage à l'écran-------- */
-            window.clear(sf::Color::Black);
-            window.draw(map,sf::RenderStates::Default);
+                /* --------Actions Principales-------- */
+                menu.Sprite(window);
 
-            window.display();
+                window.clear(sf::Color::Black);
+                window.draw(menu.getSprite());
+                window.display();
+
+            }
+
         }
-        else if (phase == 1)
+
+        else if (menu.getEtat()==PLAY)
         {
+            sf::Time elapsed = clock.restart();
+
+            /* --------Gestion de la musique-------- */
+            if(music_menu.getStatus()==music_jeu.Playing)
+                music_menu.stop();
+            if(music_jeu.getStatus()==music_jeu.Stopped)
+                music_jeu.play();
+
             /* --------Actions Principales-------- */
             perso.move(&level,tile_size,20);
-
+            troll.IAEnnemiBase(perso.getpos(),&level,tile_size,20);
             perso.getarme()->followHero(perso.getpos(), perso.getdir());
+            perso.gestionAttaque(troll.gethitbox(), troll);
 
-            for (projItor = projectileList.begin (); projItor != projectileList.end (); ++projItor) {
-                (*projItor)->fly(perso.getdir(), (*projItor)->getspeed());
-            }
-
-            perso.gestionAttaqueDistance(ennemiList, projectileList);
-
-            for (itor = ennemiList.begin(); itor != ennemiList.end(); ++itor)
-            {
-                (*itor)->IAEnnemiBase(perso.getpos(),&level,tile_size,20);
-
-                if ((*itor)->persoIsDead())
-                {
-                    ennemiList.erase(itor);
-                }
-            }
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                phase = 0;
+            {
+                if(music_jeu.getStatus()==music_jeu.Playing)
+                    music_jeu.stop();
+                menu.setEtat(NONE);
+            }
+
+            if (troll.persoIsDead())
+                troll.~Ennemi();
+
+            /* --------Gestion Deplacement Map-------- */
+            if (perso.changementDeMap(&level,tile_size)!=0 and mybool)
+            {
+                mybool=false;
+                str = perso.GestionMap(&level,tile_size);
+                cout<<str<<endl;
+                Case_map.loadLevelFromText(&width_level,&height_level,&level,str,perso.getPosMap());
+                Case_map.load("tileset.png",tile_size,&level,width_level,height_level);
+            }
+            compteur++;
+            if (compteur>20 and not(mybool))
+            {
+                mybool=true;
+                compteur=0;
+            }
 
             /* --------Affichage à l'écran-------- */
             window.clear(sf::Color::Black);
-            window.draw(map,sf::RenderStates::Default);
-
+            window.draw(Case_map,sf::RenderStates::Default);
             window.draw(perso.getsprite());
+            window.draw(troll.getsprite());
             window.draw(perso.getspriteArme());
-            // On dessine la liste d'entités
-            for (itor = ennemiList.begin (); itor != ennemiList.end (); ++itor) {
-                window.draw((*itor)->getsprite());
-            }
-            for (projItor = projectileList.begin (); projItor != projectileList.end (); ++projItor) {
-                window.draw((*projItor)->getsprite());
-            }
-
             window.display();
+
+
+            /* --------Boucle temporelle-------- */
+            elapsed=clock.getElapsedTime();
+            if (clock.getElapsedTime().asMilliseconds()<70)
+                usleep(70000-elapsed.asMilliseconds());
+
+
         }
 
-        elapsed=clock.getElapsedTime();
-
-        if (clock.getElapsedTime().asMilliseconds()<70)
-                usleep(70000-elapsed.asMicroseconds());
     }
 
     return 0;
