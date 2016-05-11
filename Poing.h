@@ -8,7 +8,7 @@ class Poing : public Arme {
 
 public:
 
-    Poing(std::string name, int damage, int cooldown);
+    Poing(std::string name, int damage, int cooldown, int posx, int posy);
 
 protected:
 

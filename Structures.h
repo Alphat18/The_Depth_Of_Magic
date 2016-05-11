@@ -7,10 +7,19 @@ struct Position {
 };
 
 enum Direction {RIGHT,LEFT,UP,DOWN};
-enum Status {NORMAL, TOUCHE};
+enum Status {NORMAL, TOUCHE, ATTAQUE};
 
 struct Taille {
     int largeur,hauteur;
 };
+
+struct PosMap {
+    int i,j;
+};
+
+struct noeud {
+    int x,y,cout,heuristique;
+};
+
 
 #endif // STRUCTURES_H_INCLUDED

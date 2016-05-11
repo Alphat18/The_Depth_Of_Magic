@@ -6,7 +6,7 @@ class Troll : public Ennemi {
 
 public :
 
-    Troll();
+    Troll(int posX, int posY);
 
 protected :
 

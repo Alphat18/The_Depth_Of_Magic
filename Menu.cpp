@@ -1,18 +1,13 @@
-//
-// Created by robin on 20/04/16.
-//
-
 #include "Menu.h"
 
-
 Menu::Menu() {
-    m_texture.loadFromFile("menu.png");
+    m_texture.loadFromFile("sprites/menu.png");
 
     m_sprite.setTexture(m_texture);
     m_sprite.setTextureRect(sf::Rect<int>(0,0,1200,900));
 
     m_etat=NONE;
-    buffer_bouton.loadFromFile("bruit_bouton.ogg");
+    buffer_bouton.loadFromFile("sounds/bruit_bouton.ogg");
     bruit_bouton.setBuffer(buffer_bouton);
 
 }
@@ -33,7 +28,6 @@ Etat Menu::GestionMenu(sf::Window &window) {
         if ( (localPos.x>180 and localPos.x<1075) and (localPos.y>590 and localPos.y<716) )
         {
             m_etat=LEAVE;
-            bruit_bouton.play();
         }
     }
 

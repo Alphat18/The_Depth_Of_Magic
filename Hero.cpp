@@ -1,4 +1,8 @@
+#include <iostream>
+
 #include "Hero.h"
+#include "Lance.h"
+
 
 /* --------Constructeurs-------- */
 
@@ -7,22 +11,23 @@ Hero::Hero(int hp, int mana, int vitesse, int defense) : Personnage(hp, mana, vi
     m_pos.x = 200;
     m_pos.y = 200;
 
-    m_image = "perso.png";
-    m_arme = new Lance("lance en bois", 35, 5, m_pos);
+    m_image = "sprites/perso.png";
+    m_status = NORMAL;
 
+    m_arme = new Arc("arc en bois", 40, 8, m_pos.x, m_pos.y);
     m_taille_sprite.hauteur=70;
     m_taille_sprite.largeur=50;
 
     // Initialisation du sprite
-    Tex.loadFromFile(m_image);
-    sprite.setTexture(Tex);
-    sprite.setTextureRect(sf::Rect<int>(0,0,60,70));
-    sprite.setPosition(m_pos.x,m_pos.y);
+    m_tex.loadFromFile(m_image);
+    m_sprite.setTexture(m_tex);
+    m_sprite.setTextureRect(sf::Rect<int>(0,0,60,70));
+    m_sprite.setPosition(m_pos.x,m_pos.y);
 
-    m_pos_map.i=3;
+	m_pos_map.i=3;
     m_pos_map.j=3;
 
-    std::string mon_fichier = "Map.txt";
+    std::string mon_fichier = "../Map.txt";
     std::ifstream fichier;
     fichier.open(mon_fichier.c_str());
 
@@ -33,9 +38,7 @@ Hero::Hero(int hp, int mana, int vitesse, int defense) : Personnage(hp, mana, vi
            fichier >> m_map[i][j];
         }
     }
-
-
-    /*for (int i=0;i<8;i++)
+	/*for (int i=0;i<8;i++)
     {
         for (int j = 0; j < 8; ++j)
         {
@@ -49,62 +52,94 @@ Hero::Hero(int hp, int mana, int vitesse, int defense) : Personnage(hp, mana, vi
 
 /* --------Modalités get-------- */
 
-sf::Sprite Hero::getspriteArme()
-{
-    return m_arme->getsprite();
-}
-
-Lance* Hero::getarme()
-{
-    return m_arme;
-}
-
 /* --------Autres Modalités-------- */
 
-void Hero::gestionAttaque(sf::FloatRect ennemiBoundingBox, Ennemi &ennemi) {
+void Hero::gestionAttaque(std::list<Ennemi *> &ennemiList) {
 
-    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::A)) && (m_arme->getCompteur() > m_arme->getCooldown())) {
+    if (((sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))) && (m_arme->getCompteur() > m_arme->getCooldown())) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+            m_dir = UP;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+            m_dir = DOWN;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+            m_dir = LEFT;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+            m_dir = RIGHT;
+
         m_arme->zeroCompteur();
-        ennemi.resetStatus();
+        for (std::list<Ennemi *>::iterator itor = ennemiList.begin(); itor != ennemiList.end(); ++itor) {
+            (*itor)->resetStatus();
+        }
     }
 
-    if ((m_arme->getCompteur() == 0) || (m_arme->getCompteur() == 1) || (m_arme->getCompteur() == 2))
-    {
+
+    if (m_arme->getCompteur() <= 2) {
+        m_status = ATTAQUE;
         m_arme->changeSprite(m_dir);
-        if (ennemi.getstatus() == NORMAL)
-            attaquer(ennemiBoundingBox, ennemi);
-      //  std::cout << ennemi.gethp() << std::endl;
-      //  std::cout << ennemi.getstatus() << std::endl;
+
+        for (std::list<Ennemi *>::iterator itor = ennemiList.begin(); itor != ennemiList.end(); ++itor) {
+            if ((*itor)->getstatus() != TOUCHE)
+                attaquer((**itor));
+        }
+    }
+}
+
+void Hero::gestionAttaqueDistance(std::list<Ennemi *> &ennemiList, std::list<Projectile *> &projectileList) {
+
+    if (((sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))) && (m_arme->getCompteur() > m_arme->getCooldown())) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+            m_dir = UP;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+            m_dir = DOWN;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+            m_dir = LEFT;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+            m_dir = RIGHT;
+
+        m_arme->zeroCompteur();
+
+        for (std::list<Ennemi *>::iterator itor = ennemiList.begin(); itor != ennemiList.end(); ++itor)
+        {
+            (*itor)->resetStatus();
+        }
+    }
+
+    if (m_arme->getCompteur() <= 0) {
+        m_status = ATTAQUE;
+        m_arme->changeSprite(m_dir);
+        projectileList = tirer(projectileList, m_dir);
+    }
+    else
+        resetStatus();
+
+    for (std::list<Ennemi *>::iterator itor = ennemiList.begin(); itor != ennemiList.end(); ++itor)
+    {
+        if ((*itor)->getstatus() != TOUCHE)
+            attaquerDistance(**itor, projectileList);
     }
 
     m_arme->incrCompteur(m_arme->getCooldown());
 }
 
-void Hero::attaquer(sf::FloatRect ennemiBoundingBox, Ennemi &ennemi) {
-    if (m_arme->checkHitbox(ennemiBoundingBox)) //vérifier qu'un ennemi se trouve dans la hitbox de l'attaque
-    {
-		ennemi.estTouche(m_arme->getDamage());//enlever des pv à l'ennemi
-    }
-}
-
-void Hero::move(std::vector<std::vector<int> >* level,sf::Vector2u tileSize, int width) {
+void Hero::move(std::vector<std::vector<int> >* level, sf::Vector2u tileSize, int width) {
 
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
     {
-        Sprite(UP);
-        if ( Tilemap::getTileNumber(m_pos.x+50,m_pos.y-5,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+15,m_pos.y-5,level,tileSize)==1 or (m_pos.y-m_vitesse<=5)   )
+        if (m_status != ATTAQUE)
+            m_dir = UP;
+        if ( Tilemap::getTileNumber(m_pos.x+50,m_pos.y-5,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+15,m_pos.y-5,level,tileSize)==1 )
         {}
         else {
             m_pos.y-=m_vitesse;
         }
-
     }
 
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
     {
-        Sprite(DOWN);
-        if ( Tilemap::getTileNumber(m_pos.x+50,m_pos.y+65,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+15,m_pos.y+65,level,tileSize)==1 or (m_pos.y+m_vitesse+m_taille_sprite.hauteur>=900) )
+        if (m_status != ATTAQUE)
+            m_dir = DOWN;
+        if ( Tilemap::getTileNumber(m_pos.x+50,m_pos.y+65,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+15,m_pos.y+65,level,tileSize)==1 )
         {}
         else {
             m_pos.y+=m_vitesse;
@@ -114,8 +149,9 @@ void Hero::move(std::vector<std::vector<int> >* level,sf::Vector2u tileSize, int
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        Sprite(RIGHT);
-        if ( Tilemap::getTileNumber(m_pos.x+55,m_pos.y+15,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+55,m_pos.y+60,level,tileSize)== 1 or (m_pos.x+m_vitesse+m_taille_sprite.largeur>=1195) )
+        if (m_status != ATTAQUE)
+            m_dir = RIGHT;
+        if ( Tilemap::getTileNumber(m_pos.x+55,m_pos.y+15,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+55,m_pos.y+60,level,tileSize)==1 )
         {}
         else {
             m_pos.x+=m_vitesse;
@@ -125,13 +161,16 @@ void Hero::move(std::vector<std::vector<int> >* level,sf::Vector2u tileSize, int
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
     {
-        Sprite(LEFT);
-        if ( Tilemap::getTileNumber(m_pos.x+10,m_pos.y+15,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+10,m_pos.y+60,level,tileSize)==1 or (m_pos.x-m_vitesse<=10) )
+        if (m_status != ATTAQUE)
+            m_dir = LEFT;
+        if ( Tilemap::getTileNumber(m_pos.x+10,m_pos.y+15,level,tileSize)==1 or Tilemap::getTileNumber(m_pos.x+10,m_pos.y+60,level,tileSize)==1 )
         {}
         else {
             m_pos.x-=m_vitesse;
         }
     }
+	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)))
+        Sprite(m_dir);
 }
 
 int Hero::changementDeMap ( std::vector<std::vector<int> >* level,sf::Vector2u tileSize ) {
@@ -179,7 +218,7 @@ int Hero::changementDeMap ( std::vector<std::vector<int> >* level,sf::Vector2u t
 
 }
 
-std::string Hero::GestionMap(std::vector<std::vector<int> >* level,sf::Vector2u tile_size) {
+/*std::string Hero::GestionMap(std::vector<std::vector<int> >* level,sf::Vector2u tile_size) {
 
     std::string NomCase="test";
 
@@ -208,5 +247,5 @@ std::string Hero::GestionMap(std::vector<std::vector<int> >* level,sf::Vector2u 
 
 
     return NomCase;
-    
-}
+
+}*/

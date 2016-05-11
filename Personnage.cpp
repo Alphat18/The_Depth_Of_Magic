@@ -1,30 +1,34 @@
-//
-// Created by robin on 23/12/15.
-//
+#include <list>
 
 #include "Personnage.h"
+#include "Arme.h"
+#include "Projectile.h"
 #include "Tilemap.h"
 
 /* --------Constructeurs-------- */
 Personnage::Personnage()
 {
-    m_pos.x = 100;
-    m_pos.y = 100;
-
     m_status = NORMAL;
     m_compteurPerso = 0;
-    m_boundingBox = sprite.getGlobalBounds();
+    m_boundingBox = m_sprite.getGlobalBounds();
 }
 
 Personnage::Personnage(int hp, int mana, int vitesse, int defense) : m_hp(hp), m_mana(mana), m_vitesse(vitesse), m_defense(defense)
 {
-    m_pos.x = 100;
-    m_pos.y = 100;
     m_status = NORMAL;
     m_compteurPerso = 0;
-    m_boundingBox = sprite.getGlobalBounds();
+    m_boundingBox = m_sprite.getGlobalBounds();
 }
-/* --------Modalit�s get-------- */
+
+Personnage::~Personnage()
+{
+   delete m_arme;
+   m_sprite.~Drawable();
+   m_tex.~Texture();
+
+}
+
+/* --------Modalites get-------- */
 
 std::string Personnage::getimage() {
 	return m_image;
@@ -39,7 +43,7 @@ Position Personnage::getpos() {
 }
 
 sf::Sprite Personnage::getsprite() {
-    return sprite;
+    return m_sprite;
 }
 
 Direction Personnage::getdir() {
@@ -62,7 +66,20 @@ void Personnage::resetStatus() {
     m_status = NORMAL;
 }
 
-/* --------Autres Modalit�s-------- */
+sf::Sprite Personnage::getspriteArme() {
+    return m_arme->getsprite();
+}
+
+Arc* Personnage::getarme() {
+    return m_arme;
+}
+
+void Personnage::setPos(int x, int y){
+    this->m_pos.x=x;
+    this->m_pos.y=y;
+}
+
+/* --------Autres Modalites-------- */
 
 void Personnage::estTouche(int damages) {
     m_hp -= (damages-m_defense);
@@ -73,9 +90,45 @@ bool Personnage::persoIsDead() {
     return (m_hp <= 0);
 }
 
-void Personnage::setPos(int x, int y){
-    this->m_pos.x=x;
-    this->m_pos.y=y;
+void Personnage::gestionAttaque(Personnage &perso) {
+
+    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::A)) && (m_arme->getCompteur() > m_arme->getCooldown())) {
+        m_arme->zeroCompteur();
+    }
+
+    if (m_arme->getCompteur() <= 2) {
+        m_status = ATTAQUE;
+        m_arme->changeSprite(m_dir);
+
+        if (perso.getstatus() == NORMAL)
+            attaquer(perso);
+    }
+    else
+        resetStatus();
+
+    m_arme->incrCompteur(m_arme->getCooldown());
+}
+
+void Personnage::attaquer(Personnage &ennemi) {
+    if (getarme()->checkHitbox(ennemi.gethitbox())) //vérifier qu'un ennemi se trouve dans la hitbox de l'attaque
+    {
+		ennemi.estTouche(getarme()->getDamage());//enlever des pv à l'ennemi
+    }
+}
+
+void Personnage::attaquerDistance(Personnage &ennemi, std::list<Projectile *> &projectileList) {
+    for (std::list<Projectile *>::iterator projItor = projectileList.begin (); projItor != projectileList.end (); ++projItor) {
+        if ((*projItor)->checkHitbox(ennemi.gethitbox())) //vérifier qu'un ennemi se trouve dans la hitbox de l'attaque
+        {
+            ennemi.estTouche(getarme()->getDamage());//enlever des pv à l'ennemi
+            //projectileList.erase(projItor);
+        }
+    }
+}
+
+std::list<Projectile *> Personnage::tirer(std::list<Projectile *> &projectileList, Direction dir) {
+    projectileList.push_back (new Projectile("fleche", 1, 8, m_pos.x, m_pos.y, dir));
+    return projectileList;
 }
 
 void Personnage::Sprite(Direction dir) {
@@ -85,7 +138,7 @@ void Personnage::Sprite(Direction dir) {
         m_compteurPerso+=60;
         m_dir = DOWN;
 
-        sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,0,60,70));
+        m_sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,0,60,70));
 
         if (m_compteurPerso==180)
             m_compteurPerso=0;
@@ -96,7 +149,7 @@ void Personnage::Sprite(Direction dir) {
         m_compteurPerso+=60;
         m_dir = RIGHT;
 
-        sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,70,60,70));
+        m_sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,70,60,70));
 
         if (m_compteurPerso==180)
             m_compteurPerso=0;
@@ -107,7 +160,7 @@ void Personnage::Sprite(Direction dir) {
         m_compteurPerso+=60;
         m_dir = LEFT;
 
-        sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,140,60,70));
+        m_sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,140,60,70));
 
         if (m_compteurPerso==180)
             m_compteurPerso=0;
@@ -118,14 +171,14 @@ void Personnage::Sprite(Direction dir) {
         m_compteurPerso+=60;
         m_dir = UP;
 
-        sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,210,60,70));
+        m_sprite.setTextureRect(sf::Rect<int>(m_compteurPerso,210,60,70));
 
         if (m_compteurPerso==180)
             m_compteurPerso=0;
     }
 
-    sprite.setPosition(m_pos.x,m_pos.y);
-	m_boundingBox = sprite.getGlobalBounds();
+    m_sprite.setPosition(m_pos.x,m_pos.y);
+	m_boundingBox = m_sprite.getGlobalBounds();
 
 }
 

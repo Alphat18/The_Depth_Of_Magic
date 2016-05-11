@@ -1,6 +1,6 @@
-#include "..\include\Poing.h"
+#include "Poing.h"
 
-Poing::Poing(std::string name, int damage, int cooldown) : Arme(name, damage, cooldown)
+Poing::Poing(std::string name, int damage, int cooldown, int posx, int posy) : Arme(name, damage, cooldown, posx, posy)
 {
 
     m_image = "lance.png";

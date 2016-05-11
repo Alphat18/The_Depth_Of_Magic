@@ -1,9 +1,6 @@
-//
-// Created by robin on 28/12/15.
-//
+#include <iostream>
 
 #include "Tilemap.h"
-#include <iostream>
 
 using namespace std;
 
@@ -118,25 +115,25 @@ void Tilemap::loadLevelFromText(int *width, int *height,std::vector<std::vector<
         };
     level->push_back(myline);
     }
-    fichier.close();
 
+   /* for (int j = 0; j <*height ; j++)
     if ((m_map[PosJoueur.i-1][PosJoueur.j]!=0) and (m_map[PosJoueur.i-1][PosJoueur.j]<50)){
         level->at(0).at(*width/2)=2;
     }
-
+    {
     if ((m_map[PosJoueur.i+1][PosJoueur.j]!=0) and (m_map[PosJoueur.i+1][PosJoueur.j]<50)){
         level->at(*height-1).at(*width/2)=4;
     }
-
+        for (int i = 0; i < *width; i++) {
     if ((m_map[PosJoueur.i][PosJoueur.j-1]!=0) and (m_map[PosJoueur.i][PosJoueur.j-1]<50)){
         level->at(7).at(0)=5;
+            cout << level[j][i];
 
-    }
-
+        };
     if ((m_map[PosJoueur.i][PosJoueur.j+1]!=0) and (m_map[PosJoueur.i][PosJoueur.j+1]<50)){
         level->at(7).at(19)=3;
-
-    }
+        cout<<endl;
+    }*/
 
 
 }

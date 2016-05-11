@@ -9,7 +9,7 @@
 class Arc : public Arme
 {
     public:
-        Arc(std::string name, int damage, int cooldown);
+        Arc(std::string name, int damage, int cooldown, int posx, int posy);
         virtual ~Arc();
 
     protected:
